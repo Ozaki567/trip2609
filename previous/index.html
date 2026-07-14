@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>美国纽约 + 旧金山 + 洛杉矶 + 黄石大提顿行程地图</title>
+<meta name="description" content="2026-09-22 至 2026-10-06，纽约、旧金山、洛杉矶、黄石与大提顿的无车旅行参考地图。">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+/* ═══════════════════════════════════════════
+   Design System — edit :root to change theme
+   ═══════════════════════════════════════════ */
+:root {
+  --bg-primary:    #ffffff;
+  --bg-secondary:  #f5f5f7;
+  --bg-tertiary:   #fbfbfd;
+  --bg-grouped:    #f2f2f7;
+  --bg-elevated:   #ffffff;
+  --text-primary:   #1d1d1f;
+  --text-secondary: #86868b;
+  --text-tertiary:  #aeaeb2;
+  --accent:        #0071e3;
+  --accent-hover:  #0077ed;
+  --tint-red:    #ff3b30;
+  --tint-orange: #ff9500;
+  --tint-green:  #34c759;
+  --tint-blue:   #007aff;
+  --tint-purple: #af52de;
+  --tint-pink:   #ff2d55;
+  --separator:  rgba(60, 60, 67, .12);
+  --shadow-sm:  0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:  0 4px 14px rgba(0,0,0,.08);
+  --shadow-lg:  0 8px 30px rgba(0,0,0,.12);
+  --radius-sm:  8px;
+  --radius-md:  12px;
+  --radius-lg:  16px;
+  --radius-xl:  20px;
+  --safe-top:    env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+               "Helvetica Neue", "Arial", sans-serif;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.47059;
+  letter-spacing: -0.022em;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Map ── */
+#map { width: 100%; height: 40vh; min-height: 280px; position: sticky; top: 0; z-index: 100; }
+.locate-btn {
+  width: 36px; height: 36px; border-radius: 8px;
+  background: rgba(255,255,255,.92); backdrop-filter: blur(8px);
+  border: none; box-shadow: 0 1px 4px rgba(0,0,0,.18);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.locate-btn.active { color: #007aff; }
+@keyframes loc-pulse {
+  0%   { transform: scale(1); opacity: .55; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+.loc-pulse {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: rgba(0,122,255,.25);
+  animation: loc-pulse 1.6s ease-out infinite;
+}
+
+/* ── Tabs ── */
+.tabs {
+  display: flex; gap: 6px; padding: 12px 16px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  background: rgba(255,255,255,.85); -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px); position: sticky; top: 40vh; z-index: 99;
+  border-bottom: .5px solid var(--separator); scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  flex-shrink: 0; padding: 7px 16px; border-radius: 980px; border: none;
+  background: var(--bg-grouped); color: var(--text-secondary);
+  font-size: 14px; font-weight: 500; cursor: pointer; transition: all .25s ease;
+  white-space: nowrap; letter-spacing: -0.01em;
+}
+.tab:active { transform: scale(.96); }
+.tab.active { background: var(--accent); color: #fff; }
+
+/* ── Main content ── */
+.content { max-width: 680px; margin: 0 auto; padding: 16px 16px calc(24px + var(--safe-bottom)); }
+
+/* ── Overview ── */
+.hero { text-align: center; padding: 28px 20px 20px; }
+.hero h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.025em; line-height: 1.15; }
+.hero .subtitle { font-size: 17px; color: var(--text-secondary); margin-top: 6px; font-weight: 400; }
+
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+.info-card { background: var(--bg-elevated); border-radius: var(--radius-lg); padding: 16px; box-shadow: var(--shadow-sm); }
+.info-card .label { font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .02em; margin-bottom: 6px; }
+.info-card .value { font-size: 15px; font-weight: 600; line-height: 1.4; }
+
+/* ── Section headers ── */
+.section-head { font-size: 13px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .03em; padding: 20px 0 8px; }
+
+/* ── Day header ── */
+.day-head { padding: 20px 0 12px; }
+.day-head h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+.day-head p { font-size: 15px; color: var(--text-secondary); margin-top: 2px; }
+
+/* ── Route bar ── */
+.route-bar { background: var(--bg-elevated); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 14px; box-shadow: var(--shadow-sm); font-size: 13px; color: var(--text-secondary); line-height: 1.7; white-space: pre-line; }
+.route-bar strong { color: var(--text-primary); }
+
+/* ── Timeline ── */
+.timeline { position: relative; padding-left: 24px; }
+.timeline::before { content: ''; position: absolute; left: 7px; top: 20px; bottom: 20px; width: 1.5px; background: var(--separator); }
+.tl-item { position: relative; margin-bottom: 10px; }
+.tl-dot { position: absolute; left: -20px; top: 18px; width: 10px; height: 10px; border-radius: 50%; z-index: 1; box-shadow: 0 0 0 3px var(--bg-secondary); }
+.tl-dot.food    { background: var(--tint-red); }
+.tl-dot.spot    { background: var(--tint-blue); }
+.tl-dot.hotel   { background: var(--tint-orange); }
+.tl-dot.drink   { background: var(--tint-purple); }
+.tl-dot.transport { background: var(--text-tertiary); }
+
+/* ── Card ── */
+.card { background: var(--bg-elevated); border-radius: var(--radius-md); padding: 14px 16px; box-shadow: var(--shadow-sm); transition: box-shadow .25s ease; cursor: pointer; }
+.card:active { box-shadow: var(--shadow-md); }
+.card .time { font-size: 12px; font-weight: 600; color: var(--text-tertiary); letter-spacing: .01em; }
+.card .name { font-size: 17px; font-weight: 600; margin: 2px 0 4px; letter-spacing: -0.01em; display: flex; align-items: center; gap: 6px; }
+.card .desc { font-size: 14px; color: var(--text-secondary); line-height: 1.45; }
+
+/* Badge */
+.badge { display: inline-flex; align-items: center; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 4px; }
+.badge.food   { background: rgba(255,59,48,.1);  color: var(--tint-red); }
+.badge.spot   { background: rgba(0,122,255,.1);  color: var(--tint-blue); }
+.badge.drink  { background: rgba(175,82,222,.1); color: var(--tint-purple); }
+
+/* Budget */
+.budget { display: inline-block; margin-top: 6px; padding: 3px 10px; background: var(--bg-grouped); border-radius: var(--radius-sm); font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+
+/* Payment */
+.pays { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+.pay { font-size: 11px; padding: 2px 7px; border-radius: 4px; font-weight: 600; }
+.pay.ok  { background: rgba(52,199,89,.1);  color: var(--tint-green); }
+.pay.no  { background: rgba(255,59,48,.08); color: var(--tint-red); }
+.pay.idk { background: rgba(255,149,0,.1);  color: var(--tint-orange); }
+
+/* Links row */
+.links { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 8px 14px; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 600; border: none; cursor: pointer;
+  text-decoration: none !important; transition: filter .2s;
+}
+.btn:active { filter: brightness(.9); }
+.btn.nav    { background: var(--accent); color: #fff; }
+.btn.xhs    { background: #ff2442; color: #fff; }
+.btn.dp     { background: #ffa700; color: #fff; }
+.btn.rsv    { background: var(--tint-green); color: #fff; }
+
+/* Action Sheet */
+.as-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,.35); backdrop-filter: blur(2px);
+  display: flex; align-items: flex-end; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity .25s;
+}
+.as-overlay.show { opacity: 1; pointer-events: auto; }
+.as-sheet {
+  width: 100%; max-width: 420px;
+  padding: 0 8px 34px;
+  transform: translateY(100%); transition: transform .3s cubic-bezier(.22,1,.36,1);
+}
+.as-overlay.show .as-sheet { transform: translateY(0); }
+.as-group {
+  background: rgba(255,255,255,.88); backdrop-filter: blur(20px);
+  border-radius: 14px; overflow: hidden; margin-bottom: 8px;
+}
+.as-group .as-item {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 16px; font-size: 18px; color: #007aff; font-weight: 500;
+  border: none; background: none; width: 100%; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.as-group .as-item + .as-item { border-top: .5px solid rgba(0,0,0,.12); }
+.as-group .as-item:active { background: rgba(0,0,0,.06); }
+.as-cancel { font-weight: 600; }
+
+/* Details — default open */
+.details {
+  margin-top: 10px; padding-top: 10px;
+  border-top: .5px solid var(--separator);
+  font-size: 13px; color: var(--text-secondary); line-height: 1.6;
+}
+.details.closed { display: none; }
+
+/* ── Overview day list ── */
+.day-list .card { margin-bottom: 8px; }
+.day-list .card .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+
+/* ── Payment summary ── */
+.pay-summary { background: var(--bg-elevated); border-radius: var(--radius-md); padding: 14px 16px; box-shadow: var(--shadow-sm); font-size: 13px; line-height: 1.7; margin-bottom: 10px; }
+.pay-summary h4 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.pay-summary .warn { color: var(--tint-red); }
+.pay-summary .ok-text { color: var(--tint-green); }
+
+/* ── Legend ── */
+.legend { display: flex; gap: 14px; flex-wrap: wrap; padding: 8px 0; font-size: 12px; color: var(--text-secondary); }
+.legend-item { display: flex; align-items: center; gap: 5px; }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+/* ── Leaflet overrides ── */
+.leaflet-popup-content-wrapper { border-radius: var(--radius-md) !important; box-shadow: var(--shadow-lg) !important; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif !important; }
+.leaflet-popup-content { font-size: 14px !important; line-height: 1.5 !important; margin: 12px 14px !important; }
+.leaflet-popup-content a { color: var(--accent) !important; }
+.leaflet-popup-tip { background: #fff !important; }
+.leaflet-control-zoom a { width: 34px !important; height: 34px !important; line-height: 34px !important; font-size: 16px !important; border-radius: 10px !important; background: rgba(255,255,255,.85) !important; -webkit-backdrop-filter: blur(10px) !important; backdrop-filter: blur(10px) !important; border: .5px solid var(--separator) !important; color: var(--text-primary) !important; }
+.leaflet-control-zoom { border-radius: 12px !important; overflow: hidden; box-shadow: var(--shadow-md) !important; border: none !important; }
+.leaflet-control-attribution { font-size: 9px !important; opacity: .5; }
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+<div class="tabs" id="tabs"></div>
+<div class="content" id="content"></div>
+
+<script>
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  Trip data                                                  ║
+// ╚══════════════════════════════════════════════════════════════╝
+
+const HOTEL = { name: 'Vista LIC Hotel, BW Premier Collection', lat: 40.7548, lng: -73.9343 };
+
+const DAYS = [
+  { id: 0, label: '总览', color: '#0071e3', locations: [] },
+  { id: 1, label: '9/22', date: '周二 · 香港抵达纽约', title: '第五大道 + Midtown 夜景', color: '#ff9500', locations: [
+    { name:'JFK Airport', lat:40.6413, lng:-73.7781, type:'transport', time:'06:00', desc:'CX844 抵达纽约。先入境、取行李，再前往 LIC 酒店寄存。', detail:'酒店已按用户确认修正为 9/22 晚入住同一家 Vista LIC Hotel。落地日不安排远线，核心是调时差 + Midtown 顺路体验。', gmap:'JFK+Airport' },
+    { name:'Vista LIC Hotel, BW Premier Collection', lat:40.7548, lng:-73.9343, type:'hotel', time:'09:00', desc:'寄存行李/办理入住。地址：27-05 39th Ave, Queens, NY。', gmap:'Vista+LIC+Hotel+BW+Premier+Collection' },
+    { name:'Bryant Park', lat:40.7536, lng:-73.9832, type:'spot', time:'11:00', desc:'从第五大道 Midtown 线开始，轻松进入曼哈顿节奏。', xhsKeyword:'纽约 Bryant Park NYPL 第五大道', gmap:'Bryant+Park+New+York' },
+    { name:'New York Public Library', lat:40.7532, lng:-73.9822, type:'spot', time:'11:40', desc:'纽约公共图书馆，和 Bryant Park 连在一起，适合短停参观。', reserve:'https://www.nypl.org/locations/schwarzman', xhsKeyword:'纽约公共图书馆 NYPL 攻略', gmap:'New+York+Public+Library+Stephen+A+Schwarzman+Building' },
+    { name:'Fifth Avenue Midtown', lat:40.7590, lng:-73.9750, type:'spot', time:'13:00', desc:'沿第五大道逛 Rockefeller Center、商店橱窗和 Midtown 城市核心。', detail:'这一天去掉酒店周边两个点，按用户偏好改成第五大道顺路逛。落地日注意体力，午餐和咖啡随时插入。', xhsKeyword:'纽约第五大道 Bryant Park St Patrick Grand Central', gmap:'Fifth+Avenue+Midtown+New+York' },
+    { name:'St. Patrick\'s Cathedral', lat:40.7586, lng:-73.9763, type:'spot', time:'15:30', desc:'第五大道上的教堂短停，和 Rockefeller / MoMA Store 区域顺路。', gmap:'St+Patrick+Cathedral+New+York' },
+    { name:'Grand Central Terminal', lat:40.7527, lng:-73.9772, type:'spot', time:'16:30', desc:'中央车站，适合看大厅、星空顶和顺路晚餐。', xhsKeyword:'纽约中央车站 Grand Central', gmap:'Grand+Central+Terminal' },
+    { name:'SUMMIT One Vanderbilt', lat:40.7527, lng:-73.9786, type:'spot', time:'19:30', desc:'保留夜景项目。第一晚如果精神状态 OK，看 Midtown 夜景很顺。', budget:'约 $45-70+', reserve:'https://summitov.com/', detail:'建议买可改时间票或当天看体力。若时差严重，可替换为早回酒店休息。', xhsKeyword:'SUMMIT One Vanderbilt 夜景 攻略', gmap:'SUMMIT+One+Vanderbilt' }
+  ]},
+  { id: 2, label: '9/23', date: '周三 · 纽约', title: 'AMNH + Downtown + Hamilton', color: '#34c759', locations: [
+    { name:'American Museum of Natural History', lat:40.7813, lng:-73.9735, type:'spot', time:'09:30', desc:'按用户要求把 AMNH 挪到 23 日上午，留 2.5-3 小时。', budget:'约 $28+', reserve:'https://www.amnh.org/plan-your-visit', xhsKeyword:'纽约自然历史博物馆 AMNH 攻略', gmap:'American+Museum+of+Natural+History' },
+    { name:'Staten Island Ferry / Whitehall Terminal', lat:40.7017, lng:-74.0132, type:'transport', time:'13:30', desc:'自由女神外观邮轮体验，不登岛；比登岛更省时。', budget:'免费', detail:'用户明确不需要登岛，可用 Staten Island Ferry 或商业自由女神巡航。若选择商业 cruise，以实际票务码头为准。', xhsKeyword:'纽约 自由女神 不登岛 邮轮 Staten Island Ferry', gmap:'Whitehall+Terminal+Staten+Island+Ferry' },
+    { name:'Wall Street / Trinity Church', lat:40.7075, lng:-74.0113, type:'spot', time:'15:00', desc:'Downtown 顺路短停，不做纯拍照长 Citywalk。', gmap:'Wall+Street+New+York' },
+    { name:'9/11 Memorial', lat:40.7115, lng:-74.0134, type:'spot', time:'16:00', desc:'Lower Manhattan 内容型停留，按当天体力决定是否进 museum。', reserve:'https://www.911memorial.org/visit/museum', xhsKeyword:'纽约 911 Memorial Museum', gmap:'9/11+Memorial+Museum' },
+    { name:'Theater District 演前餐区域', lat:40.7590, lng:-73.9845, type:'food', time:'17:30', desc:'回到剧院区吃演前餐，选可预约、出餐稳定的餐厅。', budget:'约 $30-60/人', pay:{card:1,cash:1}, xhsKeyword:'纽约百老汇 演前餐', dianpingKeyword:'纽约 百老汇 演前餐', gmap:'Theater+District+restaurants+New+York' },
+    { name:'Hamilton', lat:40.7590, lng:-73.9860, type:'spot', time:'19:00', desc:'百老汇第一晚：Hamilton。已核对 2026-09-23 晚场。', budget:'约 $100-250+', reserve:'https://www.broadway.org/shows/details/hamilton,540', detail:'音乐强但歌词密度高，建议提前熟悉剧情和歌单。', xhsKeyword:'Hamilton 百老汇 攻略', gmap:'Richard+Rodgers+Theatre+New+York' }
+  ]},
+  { id: 3, label: '9/24', date: '周四 · 纽约', title: 'The Met + Central Park + Stranger Things', color: '#af52de', locations: [
+    { name:'The Metropolitan Museum of Art', lat:40.7794, lng:-73.9632, type:'spot', time:'09:30', desc:'纽约核心项目，The Met 周四开放，留足 4 小时。', budget:'成人约 $30', reserve:'https://www.metmuseum.org/plan-your-visit', detail:'建议优先：埃及馆、欧洲绘画、美国馆、屋顶花园；不要试图全馆扫完。', xhsKeyword:'大都会博物馆 纽约 路线', gmap:'The+Metropolitan+Museum+of+Art' },
+    { name:'Upper East Side 午餐区域', lat:40.7790, lng:-73.9555, type:'food', time:'13:30', desc:'The Met 周边午餐，选馆前/馆后餐，不为餐厅横穿城市。', budget:'约 $20-45/人', pay:{card:1,cash:1}, xhsKeyword:'大都会博物馆 周边 餐厅', dianpingKeyword:'纽约 大都会博物馆 周边餐厅', gmap:'Upper+East+Side+restaurants+near+The+Met' },
+    { name:'Central Park', lat:40.7829, lng:-73.9654, type:'spot', time:'15:00', desc:'The Met 后只做 Central Park 短散步，不拉成长线 Citywalk。', xhsKeyword:'中央公园 大都会博物馆 路线', gmap:'Central+Park+New+York' },
+    { name:'MoMA Design Store', lat:40.7616, lng:-73.9776, type:'spot', time:'16:30', desc:'加入 MoMA 纪念品商店行程，适合购物和伴手礼。', detail:'只逛商店，不安排完整 MoMA 入馆，以免和 The Met 同日过载。', reserve:'https://store.moma.org/', xhsKeyword:'MoMA Design Store 纽约 纪念品', gmap:'MoMA+Design+Store+53rd+Street' },
+    { name:'Theater District 晚餐区域', lat:40.7590, lng:-73.9845, type:'food', time:'17:30', desc:'第二晚看剧前晚餐。', budget:'约 $30-60/人', pay:{card:1,cash:1}, xhsKeyword:'纽约 Theater District 晚餐', dianpingKeyword:'纽约 百老汇 晚餐', gmap:'Theater+District+restaurants+New+York' },
+    { name:'Stranger Things: The First Shadow', lat:40.7589, lng:-73.9875, type:'spot', time:'19:00', desc:'百老汇第二晚：Stranger Things: The First Shadow。已核对 2026-09-24 晚场。', budget:'约 $80-220+', reserve:'https://www.broadway.org/shows/details/stranger-things-the-first-shadow,818', detail:'台词比音乐剧多，建议提前了解剧情背景；当天不要再塞第三个重型博物馆。', xhsKeyword:'Stranger Things The First Shadow Broadway', gmap:'Marquis+Theatre+New+York' }
+  ]},
+  { id: 4, label: '9/25', date: '周五 · 纽约飞旧金山', title: 'High Line + JFK → SFO', color: '#8e8e93', locations: [
+    { name:'Vista LIC Hotel, BW Premier Collection', lat:40.7548, lng:-73.9343, type:'hotel', time:'08:30', desc:'退房、寄存行李。', gmap:'Vista+LIC+Hotel+BW+Premier+Collection' },
+    { name:'High Line', lat:40.7479, lng:-74.0048, type:'spot', time:'10:00', desc:'25 日上午轻量安排，高线公园 + Chelsea 一带，不进深线。', xhsKeyword:'纽约 High Line Chelsea 攻略', gmap:'The+High+Line+New+York' },
+    { name:'Chelsea Market', lat:40.7424, lng:-74.0060, type:'food', time:'11:30', desc:'早午餐/补给，之后回酒店取行李去机场。', budget:'约 $20-40/人', pay:{card:1,cash:1}, xhsKeyword:'Chelsea Market 纽约 美食', dianpingKeyword:'纽约 Chelsea Market', gmap:'Chelsea+Market' },
+    { name:'JFK Airport', lat:40.6413, lng:-73.7781, type:'transport', time:'13:00', desc:'建议 13:00 左右从 LIC/曼哈顿出发。', detail:'DL365 JFK 16:40 -> SFO 20:08，已出票。纽约交通别压线。', gmap:'JFK+Airport' },
+    { name:'San Francisco International Airport', lat:37.6213, lng:-122.3790, type:'transport', time:'20:08', desc:'抵达 SFO。晚上入住，休息。', gmap:'San+Francisco+International+Airport' }
+  ]},
+  { id: 5, label: '9/26', date: '周六 · 旧金山', title: 'Alcatraz + Ferry Building', color: '#007aff', locations: [
+    { name:'Pier 33 Alcatraz Landing', lat:37.8067, lng:-122.4058, type:'transport', time:'08:30', desc:'Alcatraz 官方渡轮码头，建议提前订票。', budget:'约 $45-65', reserve:'https://www.cityexperiences.com/san-francisco/city-cruises/alcatraz/', xhsKeyword:'旧金山 Alcatraz 攻略', gmap:'Pier+33+Alcatraz+Landing' },
+    { name:'Alcatraz Island', lat:37.8267, lng:-122.4230, type:'spot', time:'09:30', desc:'体验感强，适合替代纯拍照 Citywalk。', detail:'带外套，海湾风大；按官方船班往返。', gmap:'Alcatraz+Island' },
+    { name:'Ferry Building Marketplace', lat:37.7955, lng:-122.3937, type:'food', time:'13:00', desc:'海鲜、面包、咖啡和逛吃集中，小红书近期信号较多。', budget:'约 $20-50/人', pay:{card:1,cash:1}, xhsKeyword:'旧金山 Ferry Building 餐厅', dianpingKeyword:'旧金山 Ferry Building 餐厅', gmap:'Ferry+Building+Marketplace' },
+    { name:'Exploratorium', lat:37.8008, lng:-122.3985, type:'spot', time:'15:00', desc:'互动科学馆，和海湾线同区域，体验型项目。', budget:'约 $40', reserve:'https://www.exploratorium.edu/', xhsKeyword:'旧金山 Exploratorium', gmap:'Exploratorium+San+Francisco' },
+    { name:'North Beach / Chinatown 晚餐区域', lat:37.7995, lng:-122.4070, type:'food', time:'18:00', desc:'晚餐区域，离 Pier / Ferry Building 不远。', budget:'约 $25-60/人', pay:{card:1,cash:1}, xhsKeyword:'旧金山 North Beach Chinatown 餐厅', dianpingKeyword:'旧金山 唐人街 餐厅', gmap:'North+Beach+San+Francisco+restaurants' }
+  ]},
+  { id: 6, label: '9/27', date: '周日 · 旧金山飞洛杉矶', title: 'Santa Monica 海岸日', color: '#30b0c7', locations: [
+    { name:'San Francisco International Airport', lat:37.6213, lng:-122.3790, type:'transport', time:'中午/下午', desc:'建议 9/27 中午或下午飞 LA，避免早班机太累。', gmap:'San+Francisco+International+Airport' },
+    { name:'Los Angeles International Airport', lat:33.9416, lng:-118.4085, type:'transport', time:'下午', desc:'抵达 LA。无车旅行以 Uber/Lyft 为主。', gmap:'Los+Angeles+International+Airport' },
+    { name:'Santa Monica Pier', lat:34.0101, lng:-118.4963, type:'spot', time:'16:30', desc:'LA 第一天下午只安排海边，不赶 Getty。', xhsKeyword:'Santa Monica 洛杉矶 日落 骑行', gmap:'Santa+Monica+Pier' },
+    { name:'Marvin Braude Bike Trail', lat:34.0050, lng:-118.4920, type:'spot', time:'17:00', desc:'海岸骑行/散步，轻松但有体验感。', budget:'租车约 $15-30', xhsKeyword:'Santa Monica bike trail 租自行车', gmap:'Marvin+Braude+Bike+Trail+Santa+Monica' },
+    { name:'Santa Monica / Sawtelle 晚餐区域', lat:34.0407, lng:-118.4426, type:'food', time:'19:00', desc:'按住宿位置选 Santa Monica 海边或 Sawtelle 日料区。', budget:'约 $25-60/人', pay:{card:1,cash:1}, xhsKeyword:'Santa Monica Sawtelle 餐厅', dianpingKeyword:'洛杉矶 Sawtelle 餐厅', gmap:'Sawtelle+Japantown+restaurants' }
+  ]},
+  { id: 7, label: '9/28', date: '周一 · 洛杉矶', title: 'Universal Studios 全日', color: '#64d2ff', locations: [
+    { name:'Universal Studios Hollywood', lat:34.1381, lng:-118.3534, type:'spot', time:'09:00', desc:'LA 主方案：环球影城全日。', budget:'门票约 $110-180+，Express 另计', reserve:'https://www.universalstudioshollywood.com/', detail:'如预算允许优先 Express Pass。周一 Getty 闭馆，所以不放 Getty。', xhsKeyword:'洛杉矶 环球影城 Express 攻略', gmap:'Universal+Studios+Hollywood' },
+    { name:'Universal CityWalk', lat:34.1363, lng:-118.3520, type:'food', time:'18:00', desc:'出园后晚餐，不再跨区折腾。', budget:'约 $25-60/人', pay:{card:1,cash:1}, xhsKeyword:'Universal CityWalk Hollywood 餐厅', gmap:'Universal+CityWalk+Hollywood' }
+  ]},
+  { id: 8, label: '9/29', date: '周二 · 洛杉矶', title: 'Warner Bros + Academy Museum', color: '#5856d6', locations: [
+    { name:'Warner Bros. Studio Tour Hollywood', lat:34.1484, lng:-118.3387, type:'spot', time:'09:30', desc:'把原备用方案用上：影城幕后 tour，体验性强。', budget:'约 $73+', reserve:'https://www.wbstudiotour.com/', xhsKeyword:'Warner Bros Studio Tour Hollywood 攻略', gmap:'Warner+Bros+Studio+Tour+Hollywood' },
+    { name:'Original Farmers Market', lat:34.0720, lng:-118.3610, type:'food', time:'13:00', desc:'午餐和轻逛，离 Academy Museum 顺路。', budget:'约 $20-40/人', pay:{card:1,cash:1}, xhsKeyword:'Original Farmers Market 洛杉矶', dianpingKeyword:'洛杉矶 Original Farmers Market', gmap:'Original+Farmers+Market+Los+Angeles' },
+    { name:'Academy Museum of Motion Pictures', lat:34.0639, lng:-118.3612, type:'spot', time:'15:00', desc:'电影主题日下半场，和 Warner Bros 形成完整 LA 电影体验。', budget:'约 $25+', reserve:'https://www.academymuseum.org/', xhsKeyword:'Academy Museum 洛杉矶 攻略', gmap:'Academy+Museum+of+Motion+Pictures' },
+    { name:'The Grove', lat:34.0719, lng:-118.3570, type:'spot', time:'17:30', desc:'附近轻松逛街/晚餐，不再加远距离景点。', xhsKeyword:'The Grove 洛杉矶', gmap:'The+Grove+Los+Angeles' }
+  ]},
+  { id: 9, label: '9/30', date: '周三 · LA 飞 SLC', title: '飞猪团 Day 1 集合', color: '#bf5af2', locations: [
+    { name:'Los Angeles International Airport', lat:33.9416, lng:-118.4085, type:'transport', time:'上午/中午', desc:'LA -> SLC。需和客服确认最晚接机时间后买票。', detail:'暂按飞猪/Jupiter Legend A线 13人精品团推进，截图日期 2026-09-30。', gmap:'Los+Angeles+International+Airport' },
+    { name:'Salt Lake City International Airport', lat:40.7899, lng:-111.9791, type:'transport', time:'下午', desc:'团 Day 1：限时免费接机。', detail:'下单前核问：最晚几点抵达可接机；若航班晚点怎么办。', gmap:'Salt+Lake+City+International+Airport' },
+    { name:'Salt Lake City Marriott 系酒店', lat:40.7608, lng:-111.8910, type:'hotel', time:'18:00', desc:'飞猪 A 线写 2 晚盐湖城万豪酒店，具体酒店以确认单为准。', detail:'需要确认三人房床型、是否加床、是否非吸烟房。', gmap:'Salt+Lake+City+Marriott+Hotel' }
+  ]},
+  { id: 10, label: '10/1', date: '周四 · 团 Day 2', title: 'Jackson + Grand Teton + Yellowstone', color: '#ff9f0a', locations: [
+    { name:'Jackson Town Square / Elk Antler Arches', lat:43.4799, lng:-110.7624, type:'spot', time:'上午', desc:'团线写“杰克逊/鹿角公园”。', xhsKeyword:'Jackson Hole 鹿角公园 黄石团', gmap:'Jackson+Town+Square' },
+    { name:'Grand Teton National Park', lat:43.7904, lng:-110.6818, type:'spot', time:'中午', desc:'飞猪 A 线明确含大提顿。下单前需确认具体停靠点和停留时长。', detail:'重点问是否停 Jenny Lake、Oxbow Bend、Jackson Lake Dam 或 Mormon Row；避免只车览。', xhsKeyword:'大提顿 中文团 停留 Jenny Lake Oxbow Bend', gmap:'Grand+Teton+National+Park' },
+    { name:'West Thumb Geyser Basin', lat:44.4167, lng:-110.5726, type:'spot', time:'下午', desc:'团线写“西拇指间歇泉盆地”，从南口进入黄石后顺路。', xhsKeyword:'黄石 West Thumb Geyser Basin', gmap:'West+Thumb+Geyser+Basin' },
+    { name:'Old Faithful Snow Lodge', lat:44.4596, lng:-110.8312, type:'hotel', time:'晚间', desc:'A 线写 2 晚老忠实喷泉木屋，是这个团的核心价值。', detail:'下单前必须确认是否保证 Old Faithful Snow Lodge，而不是 West Yellowstone 或同级替换。', gmap:'Old+Faithful+Snow+Lodge' }
+  ]},
+  { id: 11, label: '10/2', date: '周五 · 团 Day 3', title: 'Yellowstone 深度游', color: '#ff453a', locations: [
+    { name:'Old Faithful', lat:44.4605, lng:-110.8281, type:'spot', time:'上午', desc:'老忠实间歇泉，按喷发预测安排。', xhsKeyword:'黄石 Old Faithful 攻略', gmap:'Old+Faithful+Yellowstone' },
+    { name:'Grand Prismatic Spring', lat:44.5250, lng:-110.8382, type:'spot', time:'上午/中午', desc:'黄石大棱镜温泉。天气冷时雾气可能影响观感。', xhsKeyword:'黄石 Grand Prismatic Spring 攻略', gmap:'Grand+Prismatic+Spring' },
+    { name:'Yellowstone Lake 小艇', lat:44.5500, lng:-110.4000, type:'spot', time:'中午', desc:'A 线必付费用含黄石湖自驾小艇。', budget:'必付费用内', detail:'若天气或季节原因取消，需要确认费用如何处理。', xhsKeyword:'黄石湖 自驾小艇', gmap:'Yellowstone+Lake' },
+    { name:'Hayden Valley', lat:44.6453, lng:-110.4686, type:'spot', time:'下午', desc:'野生动物观察区域之一，保持距离，听从导游安排。', xhsKeyword:'黄石 Hayden Valley 野生动物', gmap:'Hayden+Valley+Yellowstone' },
+    { name:'Grand Canyon of the Yellowstone / Artist Point', lat:44.7200, lng:-110.4790, type:'spot', time:'下午', desc:'团线写黄石上瀑布、艺术家点，是黄石景观核心。', xhsKeyword:'黄石 Artist Point Upper Falls', gmap:'Artist+Point+Yellowstone' },
+    { name:'Mammoth Hot Springs', lat:44.9766, lng:-110.7013, type:'spot', time:'傍晚', desc:'猛犸温泉，团线如当天时间紧可能压缩。', xhsKeyword:'黄石 Mammoth Hot Springs', gmap:'Mammoth+Hot+Springs+Yellowstone' },
+    { name:'Old Faithful Snow Lodge', lat:44.4596, lng:-110.8312, type:'hotel', time:'晚间', desc:'第二晚老忠实喷泉木屋。', gmap:'Old+Faithful+Snow+Lodge' }
+  ]},
+  { id: 12, label: '10/3', date: '周六 · 团 Day 4', title: '黄石补充 + Bear World + SLC', color: '#a2845e', locations: [
+    { name:'Yellowstone Paint Pots / 调色板区域', lat:44.5500, lng:-110.8060, type:'spot', time:'上午', desc:'飞猪截图写“黄石公园调色板”，具体点位以导游安排为准。', xhsKeyword:'黄石 Fountain Paint Pot 调色板', gmap:'Fountain+Paint+Pot+Yellowstone' },
+    { name:'Yellowstone Bear World', lat:43.9893, lng:-111.7600, type:'spot', time:'下午', desc:'回 SLC 路上的人造野生动物园，价值低于国家公园，但团线包含。', detail:'如果当天黄石路况/天气好，可问导游是否能减少停留，把时间留给公园点位。', xhsKeyword:'Yellowstone Bear World 黄石团', gmap:'Yellowstone+Bear+World' },
+    { name:'Salt Lake City Marriott 系酒店', lat:40.7608, lng:-111.8910, type:'hotel', time:'晚间', desc:'回到盐湖城住宿。', gmap:'Salt+Lake+City+Marriott+Hotel' }
+  ]},
+  { id: 13, label: '10/4', date: '周日 · 团 Day 5 / 回 SFO', title: 'Salt Lake City + Great Salt Lake', color: '#5e5ce6', locations: [
+    { name:'Utah State Capitol', lat:40.7774, lng:-111.8882, type:'spot', time:'上午', desc:'团 Day 5 盐湖城市区点。', gmap:'Utah+State+Capitol' },
+    { name:'Temple Square', lat:40.7700, lng:-111.8919, type:'spot', time:'上午', desc:'圣殿广场，短停参观。', gmap:'Temple+Square+Salt+Lake+City' },
+    { name:'Great Salt Lake', lat:40.9466, lng:-112.1617, type:'spot', time:'中午', desc:'大盐湖。Day 5 含金量一般，但适合作为回程缓冲。', xhsKeyword:'盐湖城 大盐湖 攻略', gmap:'Great+Salt+Lake' },
+    { name:'Salt Lake City International Airport', lat:40.7899, lng:-111.9791, type:'transport', time:'下午/傍晚', desc:'团结束后送机，飞 SFO。', detail:'下单前问清最早送达 SLC 机场时间，再买 SLC -> SFO 机票。', gmap:'Salt+Lake+City+International+Airport' },
+    { name:'San Francisco International Airport', lat:37.6213, lng:-122.3790, type:'transport', time:'晚间', desc:'抵达 SFO。建议住 SFO / Millbrae / Burlingame 周边。', gmap:'San+Francisco+International+Airport' }
+  ]},
+  { id: 14, label: '10/5', date: '周一 · 旧金山购物返程', title: 'Stanford Shopping + SFO', color: '#32d74b', locations: [
+    { name:'SFO / Millbrae / Burlingame 酒店区域', lat:37.6000, lng:-122.3860, type:'hotel', time:'09:30', desc:'行李寄存，最后一天以购物和返程为主。', detail:'住机场周边最稳，晚上回酒店取行李后去 SFO。', gmap:'Millbrae+hotel+near+SFO' },
+    { name:'Stanford Shopping Center', lat:37.4432, lng:-122.1711, type:'spot', time:'11:00', desc:'主选购物点：Palo Alto 主要购物餐饮目的地，适合最后一天集中购物。', reserve:'https://www.simon.com/mall/stanford-shopping-center', xhsKeyword:'Stanford Shopping Center 购物', gmap:'Stanford+Shopping+Center' },
+    { name:'Palo Alto / Menlo Park 补货区', lat:37.4490, lng:-122.1820, type:'food', time:'15:30', desc:'Target / Trader Joe\'s / 咖啡轻补货，按需要选择。', budget:'按购物', pay:{card:1,cash:1}, xhsKeyword:'Palo Alto shopping Target Trader Joe\'s', gmap:'Target+Palo+Alto+Trader+Joe\'s' },
+    { name:'Westfield Valley Fair + Santana Row', lat:37.3250, lng:-121.9450, type:'spot', time:'—', desc:'备选购物点：品牌和餐饮更全，但离 SFO 更远。', detail:'若更想买品牌齐全、吃 Din Tai Fung / Eataly / UNIQLO / Zara / POP MART，可选这里；晚上返程留足车程。', reserve:'https://www.westfield.com/en/united-states/valleyfair', xhsKeyword:'Westfield Valley Fair Santana Row 购物', gmap:'Westfield+Valley+Fair+Santana+Row' },
+    { name:'San Francisco International Airport', lat:37.6213, lng:-122.3790, type:'transport', time:'20:30', desc:'建议 20:30 左右到 SFO，准备 10/06 00:20 CX873。', detail:'CX873 SFO 00:20 -> HKG 06:15 +1。', gmap:'San+Francisco+International+Airport' }
+  ]}
+];
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  Overview tab content                                       ║
+// ╚══════════════════════════════════════════════════════════════╝
+
+function overviewContent() {
+  return `
+<div class="hero"><h1>美国纽约 + 旧金山 + 洛杉矶 + 黄石大提顿</h1><p class="subtitle">2026/09/22 - 10/06 · 3 位女生 · 无车参考行程</p></div>
+<div class="info-grid">
+  <div class="info-card"><div class="label">纽约酒店</div><div class="value">Vista LIC Hotel<br>9/22 晚 - 9/25 退房</div></div>
+  <div class="info-card"><div class="label">已知航班</div><div class="value">CX844 HKG → JFK<br>DL365 JFK → SFO<br>CX873 SFO → HKG</div></div>
+  <div class="info-card"><div class="label">美西主线</div><div class="value">SFO → LA → SLC<br>飞猪 A 线黄石团<br>10/4 回 SFO</div></div>
+  <div class="info-card"><div class="label">行程原则</div><div class="value">紧凑但顺路<br>体验型景点优先<br>少纯打卡 Citywalk</div></div>
+</div>
+<div class="section-head">行程概览</div>
+<div class="day-list">${DAYS.slice(1).map(d=>`<div class="card" onclick="go(${d.id})"><div class="name"><span class="dot" style="background:${d.color}"></span>${d.label} · ${d.title}</div><div class="desc">${d.date}</div></div>`).join('')}</div>
+<div class="section-head">关键提醒</div>
+<div class="pay-summary"><h4>黄石团暂定</h4>当前按飞猪 / Jupiter Legend A 线 13 人精品团推进。<span class="warn">下单前必须确认</span>三人房床型、9/30 接机最晚时间、Old Faithful Snow Lodge 是否保证、2026 非居民门票是否另收、10/4 送机时间。</div>
+<div class="pay-summary"><h4>门票和预约</h4><span class="warn">建议提前锁定</span>SUMMIT、Hamilton、Stranger Things、Alcatraz、Universal、Warner Bros. Studio Tour、Academy Museum。</div>
+<div class="pay-summary"><h4>支付</h4><span class="ok-text">美国信用卡/Apple Pay 基本可用。</span> 小费、团上现金、行李服务建议备少量美元现金。国家公园非居民年票是否可抵扣，以地接书面回复为准。</div>
+<div class="section-head">图例</div>
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--tint-red)"></div>餐厅</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--tint-blue)"></div>景点</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--tint-purple)"></div>酒吧/咖啡</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--tint-orange)"></div>酒店</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--text-tertiary)"></div>交通</div>
+</div>`;
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  ENGINE — Do not modify below unless customizing behavior   ║
+// ╚══════════════════════════════════════════════════════════════╝
+
+const map = L.map('map', { center: [HOTEL.lat || 35.69, HOTEL.lng || 139.74], zoom: 12, zoomControl: false, attributionControl: true });
+L.control.zoom({ position: 'topright' }).addTo(map);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
+
+/* ── Geolocation ── */
+const LocateControl = L.Control.extend({
+  options: { position: 'bottomright' },
+  onAdd() {
+    const btn = L.DomUtil.create('button', 'locate-btn');
+    btn.innerHTML = '📍';
+    btn.title = '我的位置';
+    L.DomEvent.disableClickPropagation(btn);
+    btn.addEventListener('click', () => {
+      btn.classList.add('active');
+      map.locate({ setView: true, maxZoom: 15 });
+    });
+    this._btn = btn;
+    return btn;
+  }
+});
+new LocateControl().addTo(map);
+let locMarker, locCircle;
+map.on('locationfound', e => {
+  const r = e.accuracy / 2;
+  if (locMarker) { locMarker.setLatLng(e.latlng); locCircle.setLatLng(e.latlng).setRadius(r); }
+  else {
+    locMarker = L.marker(e.latlng, {
+      icon: L.divIcon({ className:'', html:'<div style="width:14px;height:14px;border-radius:50%;background:#007aff;border:2.5px solid #fff;box-shadow:0 0 6px rgba(0,122,255,.5)"></div><div class="loc-pulse" style="position:absolute;top:0;left:0"></div>', iconSize:[14,14], iconAnchor:[7,7] }),
+      zIndexOffset: 2000
+    }).addTo(map);
+    locCircle = L.circle(e.latlng, { radius: r, color: '#007aff', fillColor: '#007aff', fillOpacity: .08, weight: 1 }).addTo(map);
+  }
+});
+map.on('locationerror', () => {});
+
+function icon(color, emoji) {
+  return L.divIcon({ className: '', html: `<div style="width:28px;height:28px;border-radius:50%;background:${color};border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.18)">${emoji||''}</div>`, iconSize: [28,28], iconAnchor: [14,14], popupAnchor: [0,-16] });
+}
+
+if (HOTEL.lat) L.marker([HOTEL.lat, HOTEL.lng], { icon: icon('#ff9500','🏨'), zIndexOffset: 1000 }).addTo(map).bindPopup(`<b>${HOTEL.name}</b>`);
+
+let markers = [], polylines = [];
+const emojis = { food:'🍽️', spot:'📍', hotel:'🏨', transport:'🚃', drink:'🍺' };
+
+function clearMap() { markers.forEach(m=>map.removeLayer(m)); polylines.forEach(p=>map.removeLayer(p)); markers=[]; polylines=[]; }
+
+function showDay(idx) {
+  clearMap();
+  if (idx === 0) {
+    const pts = [];
+    DAYS.forEach(d => d.locations.forEach(l => { if(l.lat) pts.push([l.lat,l.lng]); }));
+    if(pts.length) map.fitBounds(pts, {padding:[30,30]});
+    DAYS.slice(1).forEach(d => {
+      d.locations.filter(l=>l.time!=='—').forEach(l => {
+        const m = L.circleMarker([l.lat,l.lng], { radius:4, fillColor:d.color, color:'#fff', weight:1.5, fillOpacity:.9 }).addTo(map).bindPopup(`<b>${l.name}</b><br><span style="color:#86868b">${d.label}</span>`);
+        markers.push(m);
+      });
+    });
+    return;
+  }
+  const day = DAYS.find(d=>d.id===idx);
+  if(!day) return;
+  const coords = [];
+  day.locations.forEach(l => {
+    if(!l.lat) return;
+    const m = L.marker([l.lat,l.lng], { icon: icon(day.color, emojis[l.type]||'📌') }).addTo(map);
+    const gmapQ = l.gmap||encodeURIComponent(l.name+' USA');
+    m.bindPopup(`<b>${l.name}</b>${l.time!=='—'?'<br><span style="color:#86868b">'+l.time+'</span>':''}<br>${l.desc}${l.budget?'<br><span style="color:#ff9500">'+l.budget+'</span>':''}<br><a href="#" onclick="event.preventDefault();openAS('${l.name.replace(/'/g,"\\'")}',${l.lat},${l.lng},'${gmapQ}')">📍 导航</a>${l.xhs?' · <a href="'+l.xhs+'" target="_blank">📕 小红书</a>':''}`);
+    markers.push(m);
+    if(l.time!=='—') coords.push([l.lat,l.lng]);
+  });
+  if(coords.length>1) { const pl = L.polyline(coords, { color:day.color, weight:2.5, opacity:.5, dashArray:'6,5' }).addTo(map); polylines.push(pl); }
+  if(coords.length) map.fitBounds(coords, { padding:[40,40], maxZoom:14 });
+}
+
+// ══════════ RENDER ══════════
+function payChips(pay) {
+  if(!pay) return '';
+  let h = '<div class="pays">';
+  const m = { cash:'💴', card:'💳', suica:'Suica', paypay:'PayPay', alipay:'支付宝', wechat:'微信' };
+  for(const [k,label] of Object.entries(m)) {
+    if(pay[k]!==undefined) { const c = pay[k]===1?'ok':pay[k]===0.5?'idk':'no'; h += `<span class="pay ${c}">${label}</span>`; }
+  }
+  return h+'</div>';
+}
+
+// ── 运行环境检测：在第三方 App 的 WebView 里，自定义 scheme 基本会被拦截 ──
+const IN_APP_WEBVIEW = (() => {
+  const ua = (navigator.userAgent || '').toLowerCase();
+  return /micromessenger|xhs|xhsdiscover|discover\/|tiktok|aweme|weibo|qq\/|qqbrowser|alipayclient|dingtalk|lark|feishu|ucbrowser|baiduboxapp|toutiao|newsarticle/.test(ua);
+})();
+
+function xhsKeyword(loc) {
+  if(loc.xhsKeyword) return loc.xhsKeyword.trim();
+  return (loc.name||'').replace(/⭐.*$/g,'').replace(/（.*?）/g,'').replace(/\(.*?\)/g,'').replace(/\s+/g,' ').trim();
+}
+function xhsAppUrl(loc) { return `xhsdiscover://search/result?keyword=${encodeURIComponent(xhsKeyword(loc))}&target_search=notes&source=deeplink`; }
+function xhsWebUrl(loc) { return `https://www.xiaohongshu.com/search_result?keyword=${encodeURIComponent(xhsKeyword(loc))}&source=web_explore_feed`; }
+
+function dpKeyword(loc) {
+  if(loc.dianpingKeyword) return loc.dianpingKeyword.trim();
+  return (loc.name||'').replace(/⭐.*$/g,'').replace(/（.*?）/g,'').replace(/\(.*?\)/g,'').replace(/\s+/g,' ').trim();
+}
+function dpAppUrl(loc) { return `dianping://searchshoplist?keyword=${encodeURIComponent(dpKeyword(loc))}`; }
+function dpWebUrl(loc) { return `https://m.dianping.com/searchshop?keyword=${encodeURIComponent(dpKeyword(loc))}`; }
+
+window._extLocs = {};
+DAYS.forEach(d => d.locations.forEach(l => { window._extLocs[`${d.id}::${l.name}`] = l; }));
+window._xhsLocs = window._extLocs;
+
+function openExt(key, kind) {
+  const loc = window._extLocs[key]; if(!loc) return false;
+  if (IN_APP_WEBVIEW) {
+    window.location.href = kind==='dp' ? dpWebUrl(loc) : xhsWebUrl(loc);
+  } else {
+    window.location.href = kind==='dp' ? dpAppUrl(loc) : xhsAppUrl(loc);
+  }
+  return false;
+}
+function openXhs(key) { return openExt(key, 'xhs'); }
+function openDp(key)  { return openExt(key, 'dp'); }
+
+function locCard(loc, dayIdx) {
+  const dot = loc.type==='food'?'food':loc.type==='spot'?'spot':loc.type==='drink'?'drink':loc.type==='hotel'?'hotel':'transport';
+  const bdg = loc.type==='food'?'<span class="badge food">餐</span>':loc.type==='spot'?'<span class="badge spot">景</span>':loc.type==='drink'?'<span class="badge drink">饮</span>':'';
+  const uid = `d${dayIdx}-${loc.name.replace(/\W/g,'')}`;
+  const locKey = `${dayIdx}::${loc.name}`;
+  const gmapQ = loc.gmap||encodeURIComponent(loc.name+' USA');
+  let lnk = `<button class="btn nav" onclick="openAS('${loc.name.replace(/'/g,"\\'")}',${loc.lat},${loc.lng},'${gmapQ}')">📍 导航</button>`;
+  if(loc.xhs||loc.xhsKeyword) {
+    const xhsHref = IN_APP_WEBVIEW ? xhsWebUrl(loc) : xhsAppUrl(loc);
+    const xhsLabel = IN_APP_WEBVIEW ? '📕 小红书' : '📕 小红书 App';
+    lnk += `<a href="${xhsHref}" onclick="return openXhs('${locKey.replace(/'/g,"\\'")}')" class="btn xhs">${xhsLabel}</a>`;
+  }
+  const dpEnabled = loc.dianping !== false &&
+    (loc.dianping || loc.dianpingKeyword || loc.type==='food' || loc.type==='drink');
+  if(dpEnabled) {
+    const dpHref = IN_APP_WEBVIEW ? dpWebUrl(loc) : dpAppUrl(loc);
+    const dpLabel = IN_APP_WEBVIEW ? '🍜 大众点评' : '🍜 大众点评 App';
+    lnk += `<a href="${dpHref}" onclick="return openDp('${locKey.replace(/'/g,"\\'")}')" class="btn dp">${dpLabel}</a>`;
+  }
+  if(loc.reserve) lnk += `<a href="${loc.reserve}" target="_blank" class="btn rsv">📅 预约</a>`;
+  return `<div class="tl-item"><div class="tl-dot ${dot}"></div><div class="card" onclick="if(!event.target.closest('.btn,.links'))toggle('${uid}')"><div class="time">${loc.time!=='—'?loc.time:'备选'}</div><div class="name">${bdg} ${loc.name}</div><div class="desc">${loc.desc}</div>${loc.budget?'<div class="budget">'+loc.budget+'</div>':''}${payChips(loc.pay)}<div class="links">${lnk}</div>${loc.detail?'<div class="details" id="'+uid+'">'+loc.detail.replace(/\n/g,'<br>')+'</div>':''}</div></div>`;
+}
+
+function renderDay(idx) {
+  const d = DAYS.find(x=>x.id===idx); if(!d) return '';
+  const main = d.locations.filter(l=>l.time!=='—');
+  const alt = d.locations.filter(l=>l.time==='—');
+  let h = `<div class="day-head"><h2>${d.title}</h2><p>${d.date}</p></div>`;
+  if(main.length) { h += '<div class="section-head">行程</div><div class="timeline">'; main.forEach(l => h += locCard(l, idx)); h += '</div>'; }
+  if(alt.length) { h += '<div class="section-head">备选</div><div class="timeline">'; alt.forEach(l => h += locCard(l, idx)); h += '</div>'; }
+  return h;
+}
+
+// ══════════ NAV ══════════
+let cur = 0;
+const tabsEl = document.getElementById('tabs');
+const contentEl = document.getElementById('content');
+
+DAYS.forEach(d => {
+  const btn = document.createElement('button');
+  btn.className = 'tab' + (d.id===0?' active':'');
+  btn.dataset.day = d.id;
+  btn.textContent = d.label;
+  tabsEl.appendChild(btn);
+});
+
+function go(idx) {
+  cur = idx;
+  tabsEl.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', +t.dataset.day===idx));
+  contentEl.innerHTML = idx===0 ? overviewContent() : renderDay(idx);
+  showDay(idx);
+  contentEl.scrollTo({top:0});
+  const tab = tabsEl.querySelector(`[data-day="${idx}"]`);
+  if(tab) tab.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+}
+
+function toggle(id) { const el=document.getElementById(id); if(el) el.classList.toggle('closed'); }
+
+tabsEl.addEventListener('click', e => { const t=e.target.closest('.tab'); if(t) go(+t.dataset.day); });
+
+go(0);
+
+/* ── Action Sheet for Navigation ── */
+const asOverlay = document.createElement('div');
+asOverlay.className = 'as-overlay';
+asOverlay.innerHTML = `<div class="as-sheet">
+  <div class="as-group" id="as-opts"></div>
+  <div class="as-group"><button class="as-item as-cancel" onclick="closeAS()">取消</button></div>
+</div>`;
+document.body.appendChild(asOverlay);
+asOverlay.addEventListener('click', e => { if (e.target === asOverlay) closeAS(); });
+
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+function amapAppUrl(name, lat, lng) {
+  const scheme = IS_IOS ? 'iosamap' : 'androidamap';
+  return `${scheme}://viewMap?sourceApplication=trip&poiname=${encodeURIComponent(name)}&lat=${lat}&lon=${lng}&dev=0`;
+}
+function amapWebUrl(name, lat, lng) {
+  return `https://uri.amap.com/marker?position=${lng},${lat}&name=${encodeURIComponent(name)}&src=trip&coordinate=wgs84&callnative=1`;
+}
+function openAmap(name, lat, lng) {
+  if (IN_APP_WEBVIEW) { window.open(amapWebUrl(name, lat, lng)); return; }
+  window.location.href = amapAppUrl(name, lat, lng);
+}
+
+function openAS(name, lat, lng, gmap) {
+  const q = gmap || encodeURIComponent(name + ' USA');
+  const encName = encodeURIComponent(name);
+  const safeName = name.replace(/'/g,"\\'");
+  // WebView 内 maps:// 通常被拦截，改用 https Apple Maps URL —— iOS 系统会自动拉起 Apple Maps
+  const appleUrl = IN_APP_WEBVIEW
+    ? `https://maps.apple.com/?q=${lat},${lng}&ll=${lat},${lng}&name=${encName}`
+    : `maps://maps.apple.com/?q=${lat},${lng}&name=${encName}`;
+  const googleUrl = `https://www.google.com/maps/search/?api=1&query=${q}`;
+  document.getElementById('as-opts').innerHTML =
+    `<button class="as-item" onclick="window.open('${appleUrl}');closeAS()">🍎 Apple Maps</button>` +
+    `<button class="as-item" onclick="window.open('${googleUrl}');closeAS()">🗺️ Google Maps</button>` +
+    `<button class="as-item" onclick="openAmap('${safeName}',${lat},${lng});closeAS()">🧭 高德地图 App</button>`;
+  asOverlay.classList.add('show');
+}
+function closeAS() { asOverlay.classList.remove('show'); }
+</script>
+</body>
+</html>
