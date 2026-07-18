@@ -113,6 +113,17 @@ a:hover { text-decoration: underline; }
 .day-head h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
 .day-head p { font-size: 15px; color: var(--text-secondary); margin-top: 2px; }
 .day-head .day-summary { margin-top: 8px; color: var(--text-primary); line-height: 1.55; }
+.weather-note {
+  margin-top: 12px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  box-shadow: var(--shadow-sm);
+  font-size: 14px;
+  line-height: 1.55;
+}
+.weather-note strong { color: var(--text-primary); }
+.weather-note span { display: block; color: var(--text-secondary); margin-top: 4px; }
 
 /* ── Route bar ── */
 .route-bar { background: var(--bg-elevated); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 14px; box-shadow: var(--shadow-sm); font-size: 13px; color: var(--text-secondary); line-height: 1.7; white-space: pre-line; }
@@ -342,7 +353,11 @@ const DAYS = [
         "xhsKeyword": "SUMMIT One Vanderbilt 夜景 攻略",
         "gmap": "SUMMIT+One+Vanderbilt"
       }
-    ]
+    ],
+    "weather": {
+      "temp": "纽约约 16-26°C",
+      "clothes": "短袖或薄长袖 + 薄外套；博物馆、商场和夜景室内外温差明显，鞋子以好走为主。"
+    }
   },
   {
     "id": 2,
@@ -425,7 +440,11 @@ const DAYS = [
         "xhsKeyword": "Hamilton 百老汇 攻略",
         "gmap": "Richard+Rodgers+Theatre+New+York"
       }
-    ]
+    ],
+    "weather": {
+      "temp": "纽约约 17-25°C",
+      "clothes": "薄长袖/短袖都可，随身带针织衫或薄外套；Downtown 邮轮和晚间百老汇都可能偏凉。"
+    }
   },
   {
     "id": 3,
@@ -515,7 +534,11 @@ const DAYS = [
         "xhsKeyword": "Stranger Things The First Shadow Broadway",
         "gmap": "Marquis+Theatre+New+York"
       }
-    ]
+    ],
+    "weather": {
+      "temp": "纽约约 17-25°C",
+      "clothes": "博物馆日建议薄长袖或 T 恤外搭薄外套；中央公园步行穿舒适鞋，晚上剧院带一件不皱外套。"
+    }
   },
   {
     "id": 4,
@@ -590,7 +613,11 @@ const DAYS = [
         "detail": "需要确认三人房床型、是否加床、是否非吸烟房。",
         "gmap": "Salt+Lake+City+Marriott+Hotel"
       }
-    ]
+    ],
+    "weather": {
+      "temp": "纽约白天约 16-24°C，盐湖城夜间约 11-18°C",
+      "clothes": "白天轻便城市装，飞行和晚间抵达 SLC 加薄外套；行李里把黄石保暖层放在容易拿的位置。"
+    }
   },
   {
     "id": 5,
@@ -641,7 +668,11 @@ const DAYS = [
         "detail": "下单前必须确认是否保证 Old Faithful Snow Lodge，而不是 West Yellowstone 或同级替换。",
         "gmap": "Old+Faithful+Snow+Lodge"
       }
-    ]
+    ],
+    "weather": {
+      "temp": "Jackson / 大提顿 / 黄石约 0-16°C",
+      "clothes": "按高海拔早秋偏冷准备：保暖内搭 + 抓绒/卫衣 + 防风外套，早晚和湖边可加轻薄羽绒。"
+    }
   },
   {
     "id": 6,
@@ -722,7 +753,11 @@ const DAYS = [
         "desc": "第二晚老忠实喷泉木屋。",
         "gmap": "Old+Faithful+Snow+Lodge"
       }
-    ]
+    ],
+    "weather": {
+      "temp": "黄石约 -2-14°C",
+      "clothes": "黄石最需要保暖的一天，建议洋葱式穿法；带帽子、薄手套、厚袜子和防风防水外套。"
+    }
   },
   {
     "id": 7,
@@ -762,7 +797,11 @@ const DAYS = [
         "desc": "回到盐湖城住宿。",
         "gmap": "Salt+Lake+City+Marriott+Hotel"
       }
-    ]
+    ],
+    "weather": {
+      "temp": "黄石上午约 0-12°C，回盐湖城后约 8-20°C",
+      "clothes": "上午仍按黄石冷天穿，车程中可逐层脱；防风外套不要收进托运行李。"
+    }
   },
   {
     "id": 8,
@@ -810,7 +849,11 @@ const DAYS = [
         "detail": "若团可直接送机且有合适晚班，也可 9/29 晚飞 LA；当前主方案按 9/30 飞洛杉矶安排。",
         "gmap": "Salt+Lake+City+Marriott+Hotel"
       }
-    ]
+    ],
+    "weather": {
+      "temp": "盐湖城约 11-25°C",
+      "clothes": "干燥、日晒强，薄长袖或 T 恤配薄外套；墨镜、防晒和润唇膏很实用。"
+    }
   },
   {
     "id": 9,
@@ -875,7 +918,11 @@ const DAYS = [
         "dianpingKeyword": "洛杉矶 Sawtelle 餐厅",
         "gmap": "Sawtelle+Japantown+restaurants"
       }
-    ]
+    ],
+    "weather": {
+      "temp": "盐湖城约 12-24°C，洛杉矶约 18-27°C",
+      "clothes": "转场日穿轻便分层，落地 LA 后可换短袖；Santa Monica 傍晚有海风，保留一件薄外套。"
+    }
   },
   {
     "id": 10,
@@ -913,7 +960,11 @@ const DAYS = [
         "xhsKeyword": "Universal CityWalk Hollywood 餐厅",
         "gmap": "Universal+CityWalk+Hollywood"
       }
-    ]
+    ],
+    "weather": {
+      "temp": "洛杉矶约 18-30°C",
+      "clothes": "环球影城以透气短袖、轻便裤/裙和防晒为主；排队久，鞋子比造型重要。"
+    }
   },
   {
     "id": 11,
@@ -973,7 +1024,11 @@ const DAYS = [
         "xhsKeyword": "The Grove 洛杉矶",
         "gmap": "The+Grove+Los+Angeles"
       }
-    ]
+    ],
+    "weather": {
+      "temp": "洛杉矶约 17-29°C",
+      "clothes": "电影主题日可穿城市休闲装；室内 tour 和餐厅空调偏冷，带薄外套。"
+    }
   },
   {
     "id": 12,
@@ -1025,7 +1080,11 @@ const DAYS = [
         "xhsKeyword": "Burlingame Millbrae 餐厅 SFO",
         "gmap": "Burlingame+Ave+restaurants"
       }
-    ]
+    ],
+    "weather": {
+      "temp": "洛杉矶约 17-27°C，旧金山约 13-21°C",
+      "clothes": "从 LA 飞 SF 会明显变凉，短袖外加防风外套最稳；晚餐和机场区域注意风。"
+    }
   },
   {
     "id": 13,
@@ -1101,7 +1160,11 @@ const DAYS = [
         "dianpingKeyword": "旧金山 唐人街 餐厅",
         "gmap": "North+Beach+San+Francisco+restaurants"
       }
-    ]
+    ],
+    "weather": {
+      "temp": "旧金山约 12-21°C，海湾体感更冷",
+      "clothes": "Alcatraz 和 Ferry Building 一线风大，建议长裤 + 薄长袖 + 防风外套，不建议穿太飘的裙子。"
+    }
   },
   {
     "id": 14,
@@ -1169,7 +1232,11 @@ const DAYS = [
         "detail": "CX873 SFO 00:20 -> HKG 06:15 +1。",
         "gmap": "San+Francisco+International+Airport"
       }
-    ]
+    ],
+    "weather": {
+      "temp": "旧金山 / 半岛约 12-24°C",
+      "clothes": "购物日可轻便城市装，但早晚和 SFO 仍偏凉；外套放随身包，方便晚间去机场。"
+    }
   }
 ];
 
@@ -1188,11 +1255,15 @@ function overviewContent() {
 </div>
 <div class="section-head">行程概览</div>
 <div class="day-list">${DAYS.slice(1).map(d=>`<div class="card" onclick="go(${d.id})"><div class="name"><span class="dot" style="background:${d.color}"></span>${d.label} · ${d.title}</div><div class="desc">${d.date}</div></div>`).join('')}</div>
-<div class="section-head">关键提醒</div>
-<div class="pay-summary"><h4>方案 C 机票变化</h4>9/25 改为纽约 → SLC；9/30 SLC → LA；10/3 LA → SFO。原 DL365 JFK → SFO 需要改签或取消。</div>
-<div class="pay-summary"><h4>黄石团暂定</h4>当前按飞猪 / Jupiter Legend A 线 13 人精品团推进。<span class="warn">下单前必须确认</span>9/25 抵达 SLC 是否可接机/入住、三人房床型、Old Faithful Snow Lodge 是否保证、2026 非居民门票是否另收。</div>
-<div class="pay-summary"><h4>门票和预约</h4><span class="warn">建议提前锁定</span>SUMMIT、Hamilton、Stranger Things、Universal、Warner Bros. Studio Tour、Academy Museum、Alcatraz。</div>
-<div class="section-head">图例</div>
+	<div class="section-head">关键提醒</div>
+	<div class="pay-summary"><h4>方案 C 机票变化</h4>9/25 改为纽约 → SLC；9/30 SLC → LA；10/3 LA → SFO。原 DL365 JFK → SFO 需要改签或取消。</div>
+	<div class="pay-summary"><h4>黄石团暂定</h4>当前按飞猪 / Jupiter Legend A 线 13 人精品团推进。<span class="warn">下单前必须确认</span>9/25 抵达 SLC 是否可接机/入住、三人房床型、Old Faithful Snow Lodge 是否保证、2026 非居民门票是否另收。</div>
+	<div class="pay-summary"><h4>门票和预约</h4><span class="warn">建议提前锁定</span>SUMMIT、Hamilton、Stranger Things、Universal、Warner Bros. Studio Tour、Academy Museum、Alcatraz。</div>
+	<div class="section-head">天气与行李</div>
+	<div class="pay-summary"><h4>总体穿衣策略</h4>城市段按 20°C+ 的初秋/暖秋准备，黄石和大提顿按接近 0°C 的高海拔早冷准备。最稳是洋葱式：短袖或薄长袖、抓绒/卫衣、轻薄羽绒、防风防水外套。</div>
+	<div class="pay-summary"><h4>建议带这些</h4>3-4 件短袖/薄上衣、2 件薄长袖、1 件抓绒或卫衣、1 件轻薄羽绒、1 件防风防水外套、2-3 条长裤、厚袜子、舒服防滑鞋、冷帽/薄手套、墨镜、防晒、润唇膏、折叠伞或轻便雨衣。</div>
+	<div class="pay-summary"><h4>最容易踩坑</h4>纽约和 LA 白天可能暖，但百老汇、博物馆、飞机和餐厅空调偏冷；黄石/大提顿早晚、湖边、观景点风大，不能只按城市秋装打包。</div>
+	<div class="section-head">图例</div>
 <div class="legend">
   <div class="legend-item"><div class="legend-dot" style="background:var(--tint-red)"></div>餐厅</div>
   <div class="legend-item"><div class="legend-dot" style="background:var(--tint-blue)"></div>景点</div>
@@ -1355,7 +1426,7 @@ function renderDay(idx) {
   const d = DAYS.find(x=>x.id===idx); if(!d) return '';
   const main = d.locations.filter(l=>l.time!=='—');
   const alt = d.locations.filter(l=>l.time==='—');
-  let h = `<div class="day-head"><h2>${d.title}</h2><p>${d.date}</p>${d.summary?`<p class="day-summary">${d.summary}</p>`:''}</div>`;
+  let h = `<div class="day-head"><h2>${d.title}</h2><p>${d.date}</p>${d.summary?`<p class="day-summary">${d.summary}</p>`:''}${d.weather?`<div class="weather-note"><strong>${d.weather.temp}</strong><span>${d.weather.clothes}</span></div>`:''}</div>`;
   if(main.length) { h += '<div class="section-head">行程</div><div class="timeline">'; main.forEach(l => h += locCard(l, idx)); h += '</div>'; }
   if(alt.length) { h += '<div class="section-head">备选</div><div class="timeline">'; alt.forEach(l => h += locCard(l, idx)); h += '</div>'; }
   return h;
