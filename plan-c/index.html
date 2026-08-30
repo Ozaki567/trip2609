@@ -228,40 +228,6 @@ a:hover { text-decoration: underline; }
 .legend-item { display: flex; align-items: center; gap: 5px; }
 .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
 
-/* ── Local editor ── */
-.edit-toolbar {
-  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  padding: 10px 16px; background: rgba(255,255,255,.92);
-  border-bottom: .5px solid var(--separator); font-size: 12px;
-  color: var(--text-secondary);
-}
-.edit-toolbar strong { color: var(--text-primary); font-size: 13px; }
-.edit-toolbar button {
-  border: none; border-radius: var(--radius-sm); padding: 6px 10px;
-  background: var(--bg-grouped); color: var(--text-primary);
-  font: inherit; font-weight: 600; cursor: pointer;
-}
-.edit-toolbar button:active { transform: scale(.97); }
-[contenteditable="true"] { outline: 1.5px dashed transparent; border-radius: 4px; }
-[contenteditable="true"]:focus {
-  outline-color: var(--accent); background: rgba(0,113,227,.06);
-}
-.tl-item[draggable="true"] .card { cursor: grab; }
-.tl-item.dragging { opacity: .45; }
-.edit-menu {
-  position: fixed; z-index: 10000; min-width: 148px;
-  background: rgba(255,255,255,.96); backdrop-filter: blur(18px);
-  border-radius: 12px; box-shadow: var(--shadow-lg);
-  border: .5px solid var(--separator); overflow: hidden; display: none;
-}
-.edit-menu.show { display: block; }
-.edit-menu button {
-  width: 100%; border: 0; background: transparent; padding: 12px 14px;
-  text-align: left; color: var(--tint-red); font: inherit; font-weight: 650;
-  cursor: pointer;
-}
-.edit-menu button:active { background: rgba(255,59,48,.08); }
-
 /* ── Leaflet overrides ── */
 .leaflet-popup-content-wrapper { border-radius: var(--radius-md) !important; box-shadow: var(--shadow-lg) !important; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif !important; }
 .leaflet-popup-content { font-size: 14px !important; line-height: 1.5 !important; margin: 12px 14px !important; }
@@ -276,14 +242,7 @@ a:hover { text-decoration: underline; }
 
 <div id="map"></div>
 <div class="tabs" id="tabs"></div>
-<div class="edit-toolbar">
-  <strong>本地编辑版</strong>
-  <span>直接点文字修改，拖动每日卡片排序，右键删除区块。</span>
-  <button type="button" id="reset-page">重置本页</button>
-  <button type="button" id="clear-edits">清空全部编辑</button>
-</div>
 <div class="content" id="content"></div>
-<div class="edit-menu" id="edit-menu"><button type="button" id="delete-block">删除此部分</button></div>
 
 <script>
 // ╔══════════════════════════════════════════════════════════════╗
@@ -2096,7 +2055,7 @@ function locCard(loc, dayIdx) {
     lnk += `<a href="${dpHref}" onclick="return openDp('${locKey.replace(/'/g,"\\'")}')" class="btn dp">${dpLabel}</a>`;
   }
   if(loc.reserve) lnk += `<a href="${loc.reserve}" target="_blank" class="btn rsv">📅 预约</a>`;
-  return `<div class="tl-item" draggable="true"><div class="tl-dot ${dot}"></div><div class="card" onclick="if(!event.target.closest('.btn,.links,[contenteditable=true]'))toggle('${uid}')"><div class="time">${loc.time!=='—'?loc.time:'备选'}</div><div class="name">${bdg} ${loc.name}</div><div class="desc">${loc.desc}</div>${loc.budget?'<div class="budget">'+loc.budget+'</div>':''}${payChips(loc.pay)}<div class="links">${lnk}</div>${loc.detail?'<div class="details" id="'+uid+'">'+loc.detail.replace(/\n/g,'<br>')+'</div>':''}</div></div>`;
+  return `<div class="tl-item"><div class="tl-dot ${dot}"></div><div class="card" onclick="if(!event.target.closest('.btn,.links'))toggle('${uid}')"><div class="time">${loc.time!=='—'?loc.time:'备选'}</div><div class="name">${bdg} ${loc.name}</div><div class="desc">${loc.desc}</div>${loc.budget?'<div class="budget">'+loc.budget+'</div>':''}${payChips(loc.pay)}<div class="links">${lnk}</div>${loc.detail?'<div class="details" id="'+uid+'">'+loc.detail.replace(/\n/g,'<br>')+'</div>':''}</div></div>`;
 }
 
 function renderDay(idx) {
@@ -2113,9 +2072,6 @@ function renderDay(idx) {
 let cur = 0;
 const tabsEl = document.getElementById('tabs');
 const contentEl = document.getElementById('content');
-const editMenu = document.getElementById('edit-menu');
-let editTarget = null;
-let draggedItem = null;
 
 DAYS.forEach(d => {
   const btn = document.createElement('button');
@@ -2129,8 +2085,6 @@ function go(idx) {
   cur = idx;
   tabsEl.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', +t.dataset.day===idx));
   contentEl.innerHTML = idx===0 ? overviewContent() : renderDay(idx);
-  restoreEditedPage();
-  enableLocalEditing();
   showDay(idx);
   contentEl.scrollTo({top:0});
   const tab = tabsEl.querySelector(`[data-day="${idx}"]`);
@@ -2141,97 +2095,6 @@ function toggle(id) { const el=document.getElementById(id); if(el) el.classList.
 
 tabsEl.addEventListener('click', e => { const t=e.target.closest('.tab'); if(t) go(+t.dataset.day); });
 
-function editKey(idx = cur) { return `trip2609-action-manual-html-${idx}`; }
-function saveEditedPage() {
-  if (cur === undefined || cur === null) return;
-  localStorage.setItem(editKey(), contentEl.innerHTML);
-}
-function restoreEditedPage() {
-  const saved = localStorage.getItem(editKey());
-  if (saved) contentEl.innerHTML = saved;
-}
-function makeEditable(el) {
-  if (!el || el.closest('.links,.pays')) return;
-  el.setAttribute('contenteditable', 'true');
-  el.setAttribute('spellcheck', 'false');
-}
-function enableLocalEditing() {
-  contentEl.querySelectorAll('.hero h1,.hero .subtitle,.pay-summary h4,.pay-summary,.section-head,.day-head h2,.day-head p,.weather-note strong,.weather-note span,.card .time,.card .name,.card .desc,.budget,.details').forEach(makeEditable);
-  contentEl.querySelectorAll('.tl-item').forEach(item => item.setAttribute('draggable', 'true'));
-}
-function deletionBlockFrom(target) {
-  return target.closest('.tl-item,.pay-summary,.weather-note,.legend-item,.section-head,.day-head');
-}
-function deleteEditTarget() {
-  if (!editTarget) return;
-  const block = editTarget;
-  if (block.classList.contains('section-head')) {
-    const next = block.nextElementSibling;
-    if (next && next.matches('.timeline,.day-list,.legend,.pay-summary')) next.remove();
-  }
-  block.remove();
-  editTarget = null;
-  editMenu.classList.remove('show');
-  saveEditedPage();
-}
-function afterDragElement(container, y) {
-  const items = [...container.querySelectorAll('.tl-item:not(.dragging)')];
-  return items.reduce((closest, child) => {
-    const box = child.getBoundingClientRect();
-    const offset = y - box.top - box.height / 2;
-    if (offset < 0 && offset > closest.offset) return { offset, element: child };
-    return closest;
-  }, { offset: Number.NEGATIVE_INFINITY, element: null }).element;
-}
-
-contentEl.addEventListener('input', e => {
-  if (e.target.closest('[contenteditable=true]')) saveEditedPage();
-});
-contentEl.addEventListener('blur', e => {
-  if (e.target.closest('[contenteditable=true]')) saveEditedPage();
-}, true);
-contentEl.addEventListener('contextmenu', e => {
-  const block = deletionBlockFrom(e.target);
-  if (!block) return;
-  e.preventDefault();
-  editTarget = block;
-  editMenu.style.left = `${Math.min(e.clientX, window.innerWidth - 170)}px`;
-  editMenu.style.top = `${Math.min(e.clientY, window.innerHeight - 56)}px`;
-  editMenu.classList.add('show');
-});
-contentEl.addEventListener('dragstart', e => {
-  const item = e.target.closest('.tl-item');
-  if (!item) return;
-  draggedItem = item;
-  item.classList.add('dragging');
-  e.dataTransfer.effectAllowed = 'move';
-});
-contentEl.addEventListener('dragend', () => {
-  if (draggedItem) draggedItem.classList.remove('dragging');
-  draggedItem = null;
-  saveEditedPage();
-});
-contentEl.addEventListener('dragover', e => {
-  if (!draggedItem) return;
-  const timeline = e.target.closest('.timeline');
-  if (!timeline) return;
-  e.preventDefault();
-  const after = afterDragElement(timeline, e.clientY);
-  if (after == null) timeline.appendChild(draggedItem);
-  else timeline.insertBefore(draggedItem, after);
-});
-document.addEventListener('click', e => {
-  if (!e.target.closest('.edit-menu')) editMenu.classList.remove('show');
-});
-document.getElementById('delete-block').addEventListener('click', deleteEditTarget);
-document.getElementById('reset-page').addEventListener('click', () => {
-  localStorage.removeItem(editKey());
-  go(cur);
-});
-document.getElementById('clear-edits').addEventListener('click', () => {
-  Object.keys(localStorage).filter(k => k.startsWith('trip2609-action-manual-html-')).forEach(k => localStorage.removeItem(k));
-  go(cur);
-});
 
 go(0);
 
